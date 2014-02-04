@@ -201,7 +201,7 @@ def save_segment(stream, tmppath, filename, buffersize):
     except:
         fsize = 0
     if int(fsize) > int(buffersize):
-        log.debug('filesize exceed')
+        log.warn('filesize exceed, switch to next file')
         filename = get_next_file(filename)
         tfile = os.path.join(tmppath, str(filename))
         try:
@@ -233,7 +233,7 @@ def dump_to_file(tmppath, channel_url, uid_cookie, uagent, resolution, buffersiz
         for seq in range(curseq, endseq):
             stream = get_stream(channel_url, tmppath, uagent, seq, resolution, proxy=None)
             if not stream:
-                log.debug('failed %i', seq)
+                log.error('failed %i', seq)
                 break
             else:
                 filename = save_segment(stream, tmppath, filename, buffersize)
