@@ -7,7 +7,6 @@ import os
 import subprocess
 
 __author__ = 'cooper'
-__version__ = '0.1'
 
 import sys
 from xml.dom import minidom
@@ -236,6 +235,16 @@ def dump_to_file(tmppath, channel_url, uid_cookie, uagent, resolution, buffersiz
                 curseq = seq + 1
 
 
+def cleanup_tmpdir(tmppath):
+    import shutil
+
+    for root, dirs, files in os.walk(tmppath):
+        for f in files:
+            os.unlink(os.path.join(root, f))
+        for d in dirs:
+            shutil.rmtree(os.path.join(root, d))
+
+
 def main():
     """main"""
     import optparse
@@ -275,6 +284,10 @@ def main():
         os.mkdir(tmppath)
     except:
         pass
+
+    # cleanup the tmpdir
+    cleanup_tmpdir(tmppath)
+
     user_id = get_user_data(username, passwd, uagent, tmppath=tmppath, proxy=proxy)
     if not user_id:
         die(-1, 'unknown user ID')
