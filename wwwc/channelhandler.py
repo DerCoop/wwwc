@@ -5,6 +5,7 @@
     """
 
 import os
+import sys
 import subprocess
 
 
@@ -91,6 +92,7 @@ def select_channel(channel_list, lang=None):
         name = channel_list[channel].get_name()
         tmp_list[name] = channel
         print name
+    sys.stdin.flush()
     selected = raw_input('select a channel: ')
     return channel_list[tmp_list[selected]].get_url()
 
