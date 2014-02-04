@@ -12,5 +12,6 @@ setup(name='wwwc',
                        'the Wilmaa-webpage.',
       license='GPL v2',
       packages=['wwwc'],
-      data_files=[('~/wwwc/config', ['cfg/default_config.ini'])],
+      data_files=[('wwwc/config', ['cfg/default_config.ini'])],
+      scripts=['watch_wilmaa.py']
       )

@@ -254,7 +254,7 @@ def cleanup_tmpdir(tmppath):
 def main():
     """main"""
     import optparse
-    configfile = 'cfg/config.ini'
+    configfile = '/usr/local/wwwc/config/default_config.ini'
 
     parser = optparse.OptionParser(usage=optparse.SUPPRESS_USAGE)
     parser.add_option('--loglevel', action='store',
