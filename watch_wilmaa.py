@@ -11,6 +11,7 @@ import subprocess
 import sys
 import logging as log
 from xml.dom import minidom
+import wwwc.config as config
 
 
 class ChannelList:
@@ -123,19 +124,6 @@ def get_channel_list(uid_cookie, uagent, tmppath, proxy=None):
         channel_list[id] = ChannelList(id=id, name=name, url=url, lang=lang)
 
     return channel_list
-
-
-def get_config_section(file, section):
-    """parse config file"""
-    # TODO ignore obsolete fields
-    import ConfigParser
-    dict = {}
-    config = ConfigParser.ConfigParser()
-    config.read(file)
-    for key, value in config.items(section):
-        dict[key] = value
-
-    return dict
 
 
 def select_channel(channel_list, lang=None):
@@ -253,32 +241,37 @@ def cleanup_tmpdir(tmppath):
 
 def main():
     """main"""
-    import optparse
     configfile = '/usr/local/wwwc/config/default_config.ini'
 
-    parser = optparse.OptionParser(usage=optparse.SUPPRESS_USAGE)
-    parser.add_option('--loglevel', action='store',
-                      help='<critical | error | warning | info | debug | notset>')
-    parser.add_option('--config-file', action='store',
-                      help='the name of the configfile')
-    parser.add_option('--channel', action='store',
-                      help='select a channel')
-    opts, args = parser.parse_args()
+    opts, args = config.get_cli_options()
 
-    if opts.config_file:
-        configfile = opts.config_file
-
+    # configure logger
     # reset old log settings
     if log.root:
         del log.root.handlers[:]
 
-    # std loglevel is warning
     formatstring = '[%(levelname)s]: %(message)s'
     # get loglevel, commandline || config file || default value
 
-    main_config = get_config_section(configfile, 'main')
-    userdata = get_config_section(configfile, 'userdata')
+    if opts.loglevel:
+        loglevel = log.getLevelName(opts.loglevel.upper())
+    else:
+        loglevel = log.WARN
 
+    log.basicConfig(format=formatstring, level=loglevel)
+
+    # parse config
+    if opts.config_file:
+        configfile = opts.config_file
+
+    if not os.path.isfile(configfile):
+        msg = 'config file did not exist (' + configfile + ')'
+        die(-1, msg)
+
+    main_config = config.get_config_section(configfile, 'main')
+    userdata = config.get_config_section(configfile, 'userdata')
+
+    # TODO make class with better getter
     username = userdata['username']
     passwd = userdata['passwd']
 
@@ -287,16 +280,6 @@ def main():
     tmppath = main_config['tmppath']
     buffersize = main_config['buffer_size']
     resolution = main_config['resolution']
-    loglevel = main_config['loglevel']
-
-    loglevel = loglevel.upper()
-    if not loglevel:
-        loglevel = log.WARN # if set to NOTSET => the prx prints stdout to stdout
-
-    if opts.loglevel:
-        loglevel = log.getLevelName(opts.loglevel.upper())
-
-    log.basicConfig(format=formatstring, level=loglevel)
 
     if not tmppath:
         tmppath = os.mkdtemp()
