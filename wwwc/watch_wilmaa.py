@@ -3,12 +3,13 @@
 """
     get wilmaa stream and store it into 2 buffer files (with defined length)
     """
-import os
-import subprocess
 
 __author__ = 'cooper'
 
+import os
+import subprocess
 import sys
+import logging as log
 from xml.dom import minidom
 
 
@@ -35,7 +36,7 @@ class ChannelList:
 
 def die(rc, message):
     """print message and exit"""
-    print(message)
+    log.error(message)
     sys.exit(rc)
 
 
@@ -43,7 +44,7 @@ def get_user_data(username, passwd, uagent, tmppath, proxy=None):
     """get userdata from wilmaa server"""
     _POST_ = 'username=' + username + '&password=' + passwd
     _URL_ = 'https://box.wilmaa.com/web/loginUser?host=www.wilmaa.com'
-    print('get user data')
+    print 'get user data'
     if proxy:
         os.putenv('http_proxy',proxy)
         os.putenv('https_proxy', proxy)
@@ -98,7 +99,7 @@ def get_channel_list(uid_cookie, uagent, tmppath, proxy=None):
     import json
     #URL = 'http://www.wilmaa.com/channels/ch/webfree_en.xml'
     URL = 'http://www.wilmaa.com/channels/ch/webfree_en.json'
-    print('get channel list')
+    print 'get channel list'
     # TODO set proxy settings global?!
     if proxy:
         os.putenv('http_proxy', proxy)
@@ -109,7 +110,6 @@ def get_channel_list(uid_cookie, uagent, tmppath, proxy=None):
             '--keep-session-cookies', '-O', '-', URL]
     stream = subprocess.check_output(cmd)
     # TODO sort by language
-    # TODO return dict with {channelname: url}
     channels = json.loads(stream)
     channel_list = {}
     for channel in channels['channelList']['channels']:
@@ -121,7 +121,6 @@ def get_channel_list(uid_cookie, uagent, tmppath, proxy=None):
         url = get_url(url)
         lang = channel['streams'][0]['lang']
         channel_list[id] = ChannelList(id=id, name=name, url=url, lang=lang)
-        #print id + ' - ' + name + ' - '  + url + ' - ' + lang
 
     return channel_list
 
@@ -141,6 +140,7 @@ def get_config_section(file, section):
 
 def select_channel(channel_list, lang=None):
     """ask for a channel to play"""
+    # TODO make it more readable
     tmp_list = {}
     for channel in channel_list:
         name = channel_list[channel].get_name()
@@ -177,6 +177,7 @@ def get_stream(channel_url, tmppath, uagent, seq, resolution, proxy):
     if proxy:
         os.putenv('http_proxy',proxy)
         os.putenv('https_proxy', proxy)
+
     cmd = ['wget', '-U', uagent, '--quiet', '--load-cookies', tmppath + '/session_cookie',
             '--keep-session-cookies', '-O', '-', url]
     try:
@@ -185,18 +186,23 @@ def get_stream(channel_url, tmppath, uagent, seq, resolution, proxy):
         return
 
 
+def get_next_file(filename):
+    from math import *
+    filename += 1
+    filename %= 2
+    return int(filename)
+
+
 def save_segment(stream, tmppath, filename, buffersize):
     """save a segment of a stream"""
-    from math import *
     tfile = os.path.join(tmppath, str(filename))
     try:
         fsize = os.stat(tfile).st_size
     except:
         fsize = 0
     if int(fsize) > int(buffersize):
-        print 'filesize exceed'
-        filename += 1
-        filename %= 2
+        log.debug('filesize exceed')
+        filename = get_next_file(filename)
         tfile = os.path.join(tmppath, str(filename))
         try:
             os.remove(tfile)
@@ -204,7 +210,7 @@ def save_segment(stream, tmppath, filename, buffersize):
             pass
     with open(tfile, 'a') as fd:
         fd.write(stream)
-    print 'wrote to %s' % tfile
+    log.debug('wrote to %s', tfile)
     return filename
 
 
@@ -217,21 +223,21 @@ def dump_to_file(tmppath, channel_url, uid_cookie, uagent, resolution, buffersiz
         if not sequence:
             die(-1, 'stream not available')
         # XXX session can be a class with session cookie, uid cookie? start and last sequence
-        print sequence
+        log.debug(sequence)
         # TDOD cleanup this shit
         startseq = int(sequence)
         endseq = int(sequence) + 10
         if curseq < startseq:
             curseq = startseq
-        print 'cur', curseq
+        log.debug('cur: %i', curseq)
         for seq in range(curseq, endseq):
             stream = get_stream(channel_url, tmppath, uagent, seq, resolution, proxy=None)
             if not stream:
-                print 'failed %i' % seq
+                log.debug('failed %i', seq)
                 break
             else:
                 filename = save_segment(stream, tmppath, filename, buffersize)
-                print 'got %i' % seq
+                log.debug('got %i', seq)
                 curseq = seq + 1
 
 
@@ -248,7 +254,7 @@ def cleanup_tmpdir(tmppath):
 def main():
     """main"""
     import optparse
-    configfile = 'config.ini'
+    configfile = 'cfg/config.ini'
 
     parser = optparse.OptionParser(usage=optparse.SUPPRESS_USAGE)
     parser.add_option('--loglevel', action='store',
@@ -262,7 +268,13 @@ def main():
     if opts.config_file:
         configfile = opts.config_file
 
-    # TODO create logger
+    # reset old log settings
+    if log.root:
+        del log.root.handlers[:]
+
+    # std loglevel is warning
+    formatstring = '[%(levelname)s]: %(message)s'
+    # get loglevel, commandline || config file || default value
 
     main_config = get_config_section(configfile, 'main')
     userdata = get_config_section(configfile, 'userdata')
@@ -275,10 +287,19 @@ def main():
     tmppath = main_config['tmppath']
     buffersize = main_config['buffer_size']
     resolution = main_config['resolution']
+    loglevel = main_config['loglevel']
+
+    loglevel = loglevel.upper()
+    if not loglevel:
+        loglevel = log.WARN # if set to NOTSET => the prx prints stdout to stdout
+
+    if opts.loglevel:
+        loglevel = log.getLevelName(opts.loglevel.upper())
+
+    log.basicConfig(format=formatstring, level=loglevel)
 
     if not tmppath:
         tmppath = os.mkdtemp()
-    # TODO get this from config!
 
     try:
         os.mkdir(tmppath)
@@ -298,7 +319,7 @@ def main():
 
     if opts.channel:
         channel = opts.channel
-        print 'comming soon'
+        log.warn('channel switch is comming soon')
         channel_url = select_channel(channel_list)
         #channel_url = get_url_from_channel(channel_list, channel)
     else:
@@ -312,6 +333,5 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print('Abort by user.')
-        raise
 
 # vim: ft=py:tabstop=4:et
