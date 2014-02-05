@@ -7,15 +7,32 @@
 import ConfigParser
 import optparse
 
+
+class WwwcConfig:
+    """config class"""
+    def __init__(self):
+        self.config = {}
+
+    def get(self, key):
+        try:
+            value = self.config[key]
+        except:
+            value = None
+        return value
+
+    def set(self, key, value):
+        self.config[key] = value
+
+
 def get_config_section(file, section):
     """parse defined section of a config file"""
-    dict = {}
+    cfg = WwwcConfig()
     config = ConfigParser.ConfigParser()
     config.read(file)
     for key, value in config.items(section):
-        dict[key] = value
+        cfg.set(key, value)
 
-    return dict
+    return cfg
 
 
 def get_cli_options():

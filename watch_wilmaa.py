@@ -99,15 +99,14 @@ def main():
     main_config = config.get_config_section(configfile, 'main')
     userdata = config.get_config_section(configfile, 'userdata')
 
-    # TODO make class with better getter
-    username = userdata['username']
-    passwd = userdata['passwd']
+    username = userdata.get('username')
+    passwd = userdata.get('passwd')
 
-    proxy = main_config['proxy']
-    uagent = main_config['uagent']
-    tmppath = main_config['tmppath']
-    buffersize = main_config['buffer_size']
-    resolution = main_config['resolution']
+    proxy = main_config.get('proxy')
+    uagent = main_config.get('uagent')
+    tmppath = main_config.get('tmppath')
+    buffersize = main_config.get('buffer_size')
+    resolution = main_config.get('resolution')
 
     if not tmppath:
         tmppath = os.mkdtemp()
