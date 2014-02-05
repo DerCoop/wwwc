@@ -101,6 +101,10 @@ def select_channel(channel_list, lang=None):
     return channel_list[tmp_list[selected]].get_url()
 
 
-def get_url_from_channel(channel_list, channel):
-    # TODO
-    pass
+def get_url_from_channel(channel_list, selected):
+    """get url from selected channel"""
+    for channel in channel_list:
+        name = channel_list[channel].get_name()
+        if selected.strip() == name.strip():
+            return channel_list[channel].get_url()
+    return

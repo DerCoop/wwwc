@@ -86,7 +86,7 @@ def main():
         del log.root.handlers[:]
 
     formatstring = '[%(levelname)s]: %(message)s'
-    # get loglevel, commandline || config file || default value
+    # get loglevel, commandline || default value
 
     if opts.loglevel:
         loglevel = log.getLevelName(opts.loglevel.upper())
@@ -131,9 +131,7 @@ def main():
 
     if opts.channel:
         channel = opts.channel
-        log.warn('channel switch is comming soon')
         channel_url = channelhandler.get_url_from_channel(channel_list, channel)
-        channel_url = channelhandler.select_channel(channel_list)
     else:
         channel_url = channelhandler.select_channel(channel_list)
 
