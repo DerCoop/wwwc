@@ -25,7 +25,9 @@ class WwwcConfig:
 
 
 def get_config_section(file, section):
-    """parse defined section of a config file"""
+    """parse defined section of a config file
+    :rtype : object class WwwcConfig
+    """
     cfg = WwwcConfig()
     config = ConfigParser.ConfigParser()
     config.read(file)

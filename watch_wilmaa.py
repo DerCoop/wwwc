@@ -22,8 +22,15 @@ def die(rc, message):
     sys.exit(rc)
 
 
-def get_user_data(username, passwd, uagent, tmppath, proxy=None):
+def get_user_data(userdata, main_config):
     """get userdata from wilmaa server"""
+    username = userdata.get('username')
+    passwd = userdata.get('passwd')
+
+    proxy = main_config.get('proxy')
+    uagent = main_config.get('uagent')
+    tmppath = main_config.get('tmppath')
+
     _POST_ = 'username=' + username + '&password=' + passwd
     _URL_ = 'https://box.wilmaa.com/web/loginUser?host=www.wilmaa.com'
     print 'get user data'
@@ -99,14 +106,7 @@ def main():
     main_config = config.get_config_section(configfile, 'main')
     userdata = config.get_config_section(configfile, 'userdata')
 
-    username = userdata.get('username')
-    passwd = userdata.get('passwd')
-
-    proxy = main_config.get('proxy')
-    uagent = main_config.get('uagent')
     tmppath = main_config.get('tmppath')
-    buffersize = main_config.get('buffer_size')
-    resolution = main_config.get('resolution')
 
     if not tmppath:
         tmppath = os.mkdtemp()
@@ -119,14 +119,15 @@ def main():
     # cleanup the tmpdir
     cleanup_tmpdir(tmppath)
 
-    user_id = get_user_data(username, passwd, uagent, tmppath=tmppath, proxy=proxy)
+    main_config.set('tmppath', tmppath)
+
+    user_id = get_user_data(userdata, main_config)
     if not user_id:
         die(-1, 'unknown user ID')
 
     # TODO if userID is given, start here? check this out
     uid_cookie = create_user_id_cookie(user_id, tmppath)
-    channel_list = channelhandler.get_channel_list(uid_cookie, uagent,
-                                                   tmppath=tmppath, proxy=proxy)
+    channel_list = channelhandler.get_channel_list(uid_cookie, main_config)
 
     if opts.channel:
         channel = opts.channel
@@ -136,8 +137,7 @@ def main():
     else:
         channel_url = channelhandler.select_channel(channel_list)
 
-    rc, msg = streamhandler.dump_to_file(tmppath, channel_url, uid_cookie,
-                                         uagent, resolution, buffersize, proxy=proxy)
+    rc, msg = streamhandler.dump_to_file(channel_url, uid_cookie, main_config)
 
     if int(rc) < 0:
         die(rc, msg)

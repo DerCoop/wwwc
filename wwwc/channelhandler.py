@@ -45,7 +45,7 @@ def get_url(url):
     return uri.scheme + '://' +  uri.netloc + '/' + _subpath_ + '/' + path
 
 
-def get_channel_list(uid_cookie, uagent, tmppath, proxy=None):
+def get_channel_list(uid_cookie, main_config):
     """get channel list
 
     :rtype : channel_list[id]
@@ -58,6 +58,10 @@ def get_channel_list(uid_cookie, uagent, tmppath, proxy=None):
     import json
     #URL = 'http://www.wilmaa.com/channels/ch/webfree_en.xml'
     URL = 'http://www.wilmaa.com/channels/ch/webfree_en.json'
+    proxy = main_config.get('proxy')
+    uagent = main_config.get('uagent')
+    tmppath = main_config.get('tmppath')
+
     print 'get channel list'
     # TODO set proxy settings global?!
     if proxy:
