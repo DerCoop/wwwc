@@ -23,11 +23,13 @@ def get_current_sequence(channel_url, uid_cookie, main_config):
     cmd = ['wget', '-U', uagent, '--quiet', '--save-cookies',
             tmppath + '/session_cookie', '--load-cookies', uid_cookie,
             '--keep-session-cookies', '-O', '-', url]
-    stream = subprocess.check_output(cmd)
-    for line in stream.split('\n'):
-        if line.startswith('#EXT-X-MEDIA-SEQUENCE'):
-            return line.split(':')[1]
-    return
+    try:
+        stream = subprocess.check_output(cmd)
+        for line in stream.split('\n'):
+            if line.startswith('#EXT-X-MEDIA-SEQUENCE'):
+                return line.split(':')[1]
+    except:
+        return 0
 
 
 def get_next_file(filename):
@@ -84,11 +86,17 @@ def dump_to_file(channel_url, uid_cookie, main_config):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
     filename = 0
+    counter = 0
 
     while True:
         sequence = get_current_sequence(channel_url, uid_cookie, main_config)
         if not sequence:
-            return -1, 'stream not available'
+            if counter == 3:
+                return -1, 'stream not available'
+            counter += 1
+            break
+        else:
+            counter = 0
         # XXX session can be a class with session cookie, uid cookie? start and last sequence
         log.debug(sequence)
         # TDOD cleanup this shit
