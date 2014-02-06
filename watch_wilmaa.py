@@ -24,23 +24,40 @@ def die(rc, message):
 
 def get_user_data(userdata, main_config):
     """get userdata from wilmaa server"""
+    import urllib
+    import urllib2
+
     username = userdata.get('username')
     passwd = userdata.get('passwd')
-
     proxy = main_config.get('proxy')
     uagent = main_config.get('uagent')
-    tmppath = main_config.get('tmppath')
 
-    _POST_ = 'username=' + username + '&password=' + passwd
-    _URL_ = 'https://box.wilmaa.com/web/loginUser?host=www.wilmaa.com'
-    print 'get user data'
+    values = {}
+    values['host'] = 'www.wilmaa.com'
+    values['username'] = username
+    values['password'] = passwd
+    data = urllib.urlencode(values)
+
+    header = {}
+    header['User-Agent'] = uagent
+
+    url = 'https://box.wilmaa.com/web/loginUser'
+    req = urllib2.Request(url, data, header)
+
+    opener = urllib2.build_opener()
+    # we do not need this cookie
+    # cj = cookielib.CookieJar()
+    # opener.add_handler(urllib2.HTTPCookieProcessor(cj))
     if proxy:
-        os.putenv('http_proxy',proxy)
-        os.putenv('https_proxy', proxy)
-    cmd = ['wget', '-U', uagent, '--quiet', '--save-cookies',
-            tmppath + '/php_session_id' , '--keep-session-cookies',
-            '--post-data', _POST_, '-O', '-', _URL_]
-    stream = subprocess.check_output(cmd)
+        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener.add_handler(proxy)
+
+    urllib2.install_opener(opener)
+
+    print 'get user data'
+    response = urllib2.urlopen(req)
+    stream = response.read()
+
     userdata = minidom.parseString(stream)
     for entry in userdata.firstChild.childNodes:
         if entry.nodeName == 'authenticated':
@@ -51,7 +68,6 @@ def get_user_data(userdata, main_config):
                 if subentry.nodeName == 'user_id':
                     user_id = subentry.firstChild.data
                     return user_id
-
     return
 
 
