@@ -45,7 +45,7 @@ def get_url(url):
     return uri.scheme + '://' +  uri.netloc + '/' + _subpath_ + '/' + path
 
 
-def get_channel_list(uid_cookie, main_config):
+def get_channel_list(user_id, main_config):
     """get channel list
 
     :rtype : channel_list[id]
@@ -56,22 +56,34 @@ def get_channel_list(uid_cookie, main_config):
 
     """
     import json
-    #URL = 'http://www.wilmaa.com/channels/ch/webfree_en.xml'
-    URL = 'http://www.wilmaa.com/channels/ch/webfree_en.json'
+    import urllib2
+    import cookielib
+    import sessionhandler
+
+    # url = 'http://www.wilmaa.com/channels/ch/webfree_en.xml'
+    url = 'http://www.wilmaa.com/channels/ch/webfree_en.json'
     proxy = main_config.get('proxy')
     uagent = main_config.get('uagent')
-    tmppath = main_config.get('tmppath')
+
+    header = {}
+    header['User-Agent'] = uagent
+
+    req = urllib2.Request(url, None, header)
+    opener = urllib2.build_opener()
+    cj = cookielib.CookieJar()
+    wilmaa_uid_ck = sessionhandler.create_cookie('wilmaUserID', user_id)
+    cj.set_cookie(wilmaa_uid_ck)
+    opener.add_handler(urllib2.HTTPCookieProcessor(cj))
+    if proxy:
+        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener.add_handler(proxy)
+
+    urllib2.install_opener(opener)
 
     print 'get channel list'
-    # TODO set proxy settings global?!
-    if proxy:
-        os.putenv('http_proxy', proxy)
-        os.putenv('https_proxy', proxy)
-    # TODO add proxy only if set
-    cmd = ['wget', '-U', uagent, '--quiet', '--save-cookies',
-            tmppath + '/cookie', '--load-cookies', uid_cookie,
-            '--keep-session-cookies', '-O', '-', URL]
-    stream = subprocess.check_output(cmd)
+    response = urllib2.urlopen(req)
+    stream = response.read()
+
     # TODO sort by language
     channels = json.loads(stream)
     channel_list = {}

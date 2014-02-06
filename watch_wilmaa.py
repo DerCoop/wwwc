@@ -71,6 +71,7 @@ def get_user_data(userdata, main_config):
     return
 
 
+# deprecated
 def create_user_id_cookie(user_id, tmppath):
     """create cookie with the userid"""
     # www.wilmaa.com	FALSE	/	FALSE	0	wilmaUserID	userid
@@ -142,8 +143,7 @@ def main():
         die(-1, 'unknown user ID')
 
     # TODO if userID is given, start here? check this out
-    uid_cookie = create_user_id_cookie(user_id, tmppath)
-    channel_list = channelhandler.get_channel_list(uid_cookie, main_config)
+    channel_list = channelhandler.get_channel_list(user_id, main_config)
 
     if opts.channel:
         channel = opts.channel
@@ -151,6 +151,7 @@ def main():
     else:
         channel_url = channelhandler.select_channel(channel_list)
 
+    uid_cookie = create_user_id_cookie(user_id, tmppath)
     rc, msg = streamhandler.dump_to_file(channel_url, uid_cookie, main_config)
 
     if int(rc) < 0:
