@@ -45,7 +45,7 @@ def get_url(url):
     return uri.scheme + '://' +  uri.netloc + '/' + _subpath_ + '/' + path
 
 
-def get_channel_list(main_config, wilmaa_uid_ck):
+def get_channel_list(main_config, cj):
     """get channel list
 
     :rtype : channel_list[id]
@@ -70,8 +70,6 @@ def get_channel_list(main_config, wilmaa_uid_ck):
 
     req = urllib2.Request(url, None, header)
     opener = urllib2.build_opener()
-    cj = cookielib.CookieJar()
-    cj.set_cookie(wilmaa_uid_ck)
     opener.add_handler(urllib2.HTTPCookieProcessor(cj))
     if proxy:
         proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})

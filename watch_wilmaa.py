@@ -144,8 +144,11 @@ def main():
         die(-1, 'unknown user ID')
 
     # TODO if userID is given, start here? check this out
-    wilmaa_uid_ck = sessionhandler.create_cookie('wilmaUserID', user_id)
-    channel_list = channelhandler.get_channel_list(main_config, wilmaa_uid_ck)
+    import cookielib
+    cj = cookielib.CookieJar()
+    cj.set_cookie(sessionhandler.create_cookie('wilmaUserID', user_id))
+
+    channel_list = channelhandler.get_channel_list(main_config, cj)
 
     if opts.channel:
         channel = opts.channel
@@ -153,8 +156,7 @@ def main():
     else:
         channel_url = channelhandler.select_channel(channel_list)
 
-    uid_cookie = create_user_id_cookie(user_id, tmppath)
-    rc, msg = streamhandler.dump_to_file(channel_url, uid_cookie, main_config)
+    rc, msg = streamhandler.dump_to_file(channel_url, cj, main_config)
 
     if int(rc) < 0:
         die(rc, msg)

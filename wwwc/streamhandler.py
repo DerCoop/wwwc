@@ -7,24 +7,32 @@
 import logging as log
 import subprocess
 import os
+import urllib2
 
 
-def get_current_sequence(channel_url, uid_cookie, main_config):
+def get_current_sequence(channel_url, cj, main_config):
     """get the current sequence from the paylist"""
     proxy = main_config.get('proxy')
     uagent = main_config.get('uagent')
     resolution = main_config.get('resolution')
-    tmppath = main_config.get('tmppath')
     url = str(channel_url) + '/index_' + str(resolution) + '_av-p.m3u8'
 
+    header = {}
+    header['User-Agent'] = uagent
+
+    req = urllib2.Request(url, None, header)
+    opener = urllib2.build_opener()
+    opener.add_handler(urllib2.HTTPCookieProcessor(cj))
     if proxy:
-        os.putenv('http_proxy',proxy)
-        os.putenv('https_proxy', proxy)
-    cmd = ['wget', '-U', uagent, '--quiet', '--save-cookies',
-            tmppath + '/session_cookie', '--load-cookies', uid_cookie,
-            '--keep-session-cookies', '-O', '-', url]
+        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener.add_handler(proxy)
+
+    urllib2.install_opener(opener)
+
+    response = urllib2.urlopen(req)
+    stream = response.read()
+
     try:
-        stream = subprocess.check_output(cmd)
         for line in stream.split('\n'):
             if line.startswith('#EXT-X-MEDIA-SEQUENCE'):
                 return line.split(':')[1]
@@ -63,33 +71,40 @@ def save_segment(stream, filename, main_config):
     return filename
 
 
-def get_stream(channel_url, seq, main_config):
+def get_stream(channel_url, seq, main_config, cj):
     """get a segment of the stream"""
     proxy = main_config.get('proxy')
     uagent = main_config.get('uagent')
     resolution = main_config.get('resolution')
-    tmppath = main_config.get('tmppath')
     url = str(channel_url) + '/segment' + str(seq) + '_' + str(resolution) + '_av-p.ts?sd=6'
-    if proxy:
-        os.putenv('http_proxy', proxy)
-        os.putenv('https_proxy', proxy)
 
-    cmd = ['wget', '-U', uagent, '--quiet', '--load-cookies', tmppath + '/session_cookie',
-            '--keep-session-cookies', '-O', '-', url]
+    header = {}
+    header['User-Agent'] = uagent
+
+    req = urllib2.Request(url, None, header)
+    opener = urllib2.build_opener()
+    opener.add_handler(urllib2.HTTPCookieProcessor(cj))
+    if proxy:
+        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener.add_handler(proxy)
+
+    urllib2.install_opener(opener)
+
     try:
-        return subprocess.check_output(cmd)
+        response = urllib2.urlopen(req)
+        return response.read()
     except:
         return
 
 
-def dump_to_file(channel_url, uid_cookie, main_config):
+def dump_to_file(channel_url, cj, main_config):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
     filename = 0
     counter = 0
 
     while True:
-        sequence = get_current_sequence(channel_url, uid_cookie, main_config)
+        sequence = get_current_sequence(channel_url, cj, main_config)
         if not sequence:
             if counter == 3:
                 return -1, 'stream not available'
@@ -106,7 +121,7 @@ def dump_to_file(channel_url, uid_cookie, main_config):
             curseq = startseq
         log.debug('cur: %i', curseq)
         for seq in range(curseq, endseq):
-            stream = get_stream(channel_url, seq, main_config)
+            stream = get_stream(channel_url, seq, main_config, cj)
             if not stream:
                 log.error('failed %i', seq)
                 break
