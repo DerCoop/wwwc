@@ -93,6 +93,7 @@ def cleanup_tmpdir(tmppath):
 
 def main():
     """main"""
+    import wwwc.sessionhandler as sessionhandler
     configfile = '/usr/local/wwwc/config/default_config.ini'
 
     opts, args = config.get_cli_options()
@@ -143,7 +144,8 @@ def main():
         die(-1, 'unknown user ID')
 
     # TODO if userID is given, start here? check this out
-    channel_list = channelhandler.get_channel_list(user_id, main_config)
+    wilmaa_uid_ck = sessionhandler.create_cookie('wilmaUserID', user_id)
+    channel_list = channelhandler.get_channel_list(main_config, wilmaa_uid_ck)
 
     if opts.channel:
         channel = opts.channel
