@@ -9,17 +9,12 @@ __author__ = 'cooper'
 import os
 import subprocess
 import sys
+import wwwc.misc as misc
 import logging as log
 from xml.dom import minidom
 import wwwc.config as config
 import wwwc.streamhandler as streamhandler
 import wwwc.channelhandler as channelhandler
-
-
-def die(rc, message):
-    """print message and exit"""
-    log.error(message)
-    sys.exit(rc)
 
 
 def get_user_data(userdata, main_config):
@@ -119,7 +114,7 @@ def main():
 
     if not os.path.isfile(configfile):
         msg = 'config file did not exist (' + configfile + ')'
-        die(-1, msg)
+        misc.die(-1, msg)
 
     main_config = config.get_config_section(configfile, 'main')
     userdata = config.get_config_section(configfile, 'userdata')
@@ -159,7 +154,7 @@ def main():
     rc, msg = streamhandler.dump_to_file(channel_url, cj, main_config)
 
     if int(rc) < 0:
-        die(rc, msg)
+        misc.die(rc, msg)
 
 
 if __name__ == '__main__':
