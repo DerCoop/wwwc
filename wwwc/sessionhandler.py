@@ -5,6 +5,35 @@
     """
 
 import cookielib
+import misc
+from config import WwwcConfig
+from xml.dom import minidom
+
+
+class WilmaaSession(WwwcConfig):
+    """class for wilmaa sessions"""
+
+    def __init__(self, filename, section):
+        WwwcConfig.__init__(self, filename, section)
+        self.uagent = self.config.get('uagent')
+        self.proxy = self.config.get('proxy')
+        self.resolution = self.config.get('resolution')
+        self.tmppath = self.config.get('tmppath')
+        self.cookie = cookielib.CookieJar()
+
+    def add_cookie(self, cookie):
+        """add a netscape cookie by hand"""
+        self.cookie.set_cookie(cookie)
+
+    def get_cookie(self):
+        """get the cookie"""
+        return self.cookie
+
+    def get_stream(self, url):
+        """get streamsegment"""
+        pass
+
+
 def get_user_data(userdata, main_config):
     """get userdata from wilmaa server"""
     import urllib
@@ -81,3 +110,11 @@ def create_cookie(name, value):
         comment_url=None,
         rest=None
     )
+
+
+def create_uid_cookie(userdata, session):
+    user_id = get_user_data(userdata, session)
+    if not user_id:
+        misc.die(-1, 'unknown user ID')
+
+    return create_cookie('wilmaUserID', user_id)
