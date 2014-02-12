@@ -69,11 +69,12 @@ def main():
 
     main_config = config.get_config_section(configfile, 'main')
     userdata = config.get_config_section(configfile, 'userdata')
+    if not tmppath:
 
+        import tempfile
+        tmppath = tempfile.mkdtemp()
     tmppath = main_config.get('tmppath')
 
-    if not tmppath:
-        tmppath = os.mkdtemp()
 
     try:
         os.mkdir(tmppath)
