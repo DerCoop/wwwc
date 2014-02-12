@@ -45,14 +45,11 @@ def get_url(url):
     return uri.scheme + '://' +  uri.netloc + '/' + _subpath_ + '/' + path
 
 
-def get_channel_list(main_config, cj):
+def get_channel_list(session):
     """get channel list
 
+    :param : session
     :rtype : channel_list[id]
-    :param uid_cookie:
-    :param uagent:
-    :param tmppath:
-    :param proxy:
 
     """
     import json
@@ -62,15 +59,15 @@ def get_channel_list(main_config, cj):
 
     # url = 'http://www.wilmaa.com/channels/ch/webfree_en.xml'
     url = 'http://www.wilmaa.com/channels/ch/webfree_en.json'
-    proxy = main_config.get('proxy')
-    uagent = main_config.get('uagent')
+    proxy = session.get('proxy')
+    uagent = session.get('uagent')
 
     header = {}
     header['User-Agent'] = uagent
 
     req = urllib2.Request(url, None, header)
     opener = urllib2.build_opener()
-    opener.add_handler(urllib2.HTTPCookieProcessor(cj))
+    opener.add_handler(urllib2.HTTPCookieProcessor(session.get_cookie()))
     if proxy:
         proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
         opener.add_handler(proxy)

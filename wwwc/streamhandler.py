@@ -10,11 +10,11 @@ import os
 import urllib2
 
 
-def get_current_sequence(channel_url, cj, main_config):
+def get_current_sequence(channel_url, session):
     """get the current sequence from the paylist"""
-    proxy = main_config.get('proxy')
-    uagent = main_config.get('uagent')
-    resolution = main_config.get('resolution')
+    proxy = session.get('proxy')
+    uagent = session.get('uagent')
+    resolution = session.get('resolution')
     url = str(channel_url) + '/index_' + str(resolution) + '_av-p.m3u8'
 
     header = {}
@@ -22,7 +22,7 @@ def get_current_sequence(channel_url, cj, main_config):
 
     req = urllib2.Request(url, None, header)
     opener = urllib2.build_opener()
-    opener.add_handler(urllib2.HTTPCookieProcessor(cj))
+    opener.add_handler(urllib2.HTTPCookieProcessor(session.get_cookie()))
     if proxy:
         proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
         opener.add_handler(proxy)
@@ -71,11 +71,11 @@ def save_segment(stream, filename, main_config):
     return filename
 
 
-def get_stream(channel_url, seq, main_config, cj):
+def get_stream(channel_url, seq, session):
     """get a segment of the stream"""
-    proxy = main_config.get('proxy')
-    uagent = main_config.get('uagent')
-    resolution = main_config.get('resolution')
+    proxy = session.get('proxy')
+    uagent = session.get('uagent')
+    resolution = session.get('resolution')
     url = str(channel_url) + '/segment' + str(seq) + '_' + str(resolution) + '_av-p.ts?sd=6'
 
     header = {}
@@ -83,7 +83,7 @@ def get_stream(channel_url, seq, main_config, cj):
 
     req = urllib2.Request(url, None, header)
     opener = urllib2.build_opener()
-    opener.add_handler(urllib2.HTTPCookieProcessor(cj))
+    opener.add_handler(urllib2.HTTPCookieProcessor(session.get_cookie()))
     if proxy:
         proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
         opener.add_handler(proxy)
@@ -97,14 +97,14 @@ def get_stream(channel_url, seq, main_config, cj):
         return
 
 
-def dump_to_file(channel_url, cj, main_config):
+def dump_to_file(channel_url, session):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
     filename = 0
     counter = 0
 
     while True:
-        sequence = get_current_sequence(channel_url, cj, main_config)
+        sequence = get_current_sequence(channel_url, session)
         if not sequence:
             if counter == 3:
                 return -1, 'stream not available'
@@ -121,12 +121,12 @@ def dump_to_file(channel_url, cj, main_config):
             curseq = startseq
         log.debug('cur: %i', curseq)
         for seq in range(curseq, endseq):
-            stream = get_stream(channel_url, seq, main_config, cj)
+            stream = get_stream(channel_url, seq, session)
             if not stream:
                 log.error('failed %i', seq)
                 break
             else:
-                filename = save_segment(stream, filename, main_config)
+                filename = save_segment(stream, filename, session)
                 log.debug('got %i', seq)
                 curseq = seq + 1
     return
