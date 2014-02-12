@@ -5,6 +5,50 @@
     """
 
 import cookielib
+def get_user_data(userdata, main_config):
+    """get userdata from wilmaa server"""
+    import urllib
+    import urllib2
+
+    username = userdata.get('username')
+    passwd = userdata.get('passwd')
+    proxy = main_config.get('proxy')
+    uagent = main_config.get('uagent')
+
+    values = {}
+    values['host'] = 'www.wilmaa.com'
+    values['username'] = username
+    values['password'] = passwd
+    data = urllib.urlencode(values)
+
+    header = {}
+    header['User-Agent'] = uagent
+
+    url = 'https://box.wilmaa.com/web/loginUser'
+    req = urllib2.Request(url, data, header)
+
+    opener = urllib2.build_opener()
+    if proxy:
+        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
+        opener.add_handler(proxy)
+
+    urllib2.install_opener(opener)
+
+    print 'get user data'
+    response = urllib2.urlopen(req)
+    stream = response.read()
+
+    userdata = minidom.parseString(stream)
+    for entry in userdata.firstChild.childNodes:
+        if entry.nodeName == 'authenticated':
+            if entry.firstChild.data == 'false':
+                misc.die(-1, 'login failure, check your data')
+        elif entry.nodeName == 'user':
+            for subentry in entry.childNodes:
+                if subentry.nodeName == 'user_id':
+                    user_id = subentry.firstChild.data
+                    return user_id
+    return
 
 
 def create_cookie(name, value):
