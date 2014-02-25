@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='wwwc',
-      version='0.1.3',
+      version='0.1.4',
       description='Watching Wilmaa TV with Coop',
       author='DerCoop',
       author_email='dercoop@users.sourceforge.net',
