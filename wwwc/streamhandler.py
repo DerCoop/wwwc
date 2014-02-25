@@ -5,9 +5,36 @@
     """
 
 import logging as log
+import threading
 import subprocess
 import os
 import urllib2
+import time
+from ringbuffer import RingBuffer
+
+
+class Stream(threading.Thread):
+    """class to store the stream in a fifo (as daemon)"""
+    queue = RingBuffer()
+
+    def __init__(self, fifo):
+        threading.Thread.__init__(self)
+        self.fifo = fifo
+
+
+    def run(self):
+        """write all segments from queue to fifo"""
+        try:
+            os.mkfifo(self.fifo)
+        except:
+            pass
+
+        with open(self.fifo, 'a+') as fifo:
+            while True:
+                while self.queue.is_empty():
+                    time.sleep(1)
+                segment = self.queue.pop()
+                fifo.write(segment)
 
 
 def get_current_sequence(channel_url, session):
@@ -100,8 +127,13 @@ def get_stream(channel_url, seq, session):
 def dump_to_file(channel_url, session):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
-    filename = 0
     counter = 0
+
+    fifoname = os.path.join(session.get('tmppath'), 'streamfifo')
+
+    stream_thread = Stream(fifoname)
+    stream_thread.setDaemon(True)
+    stream_thread.start()
 
     while True:
         sequence = get_current_sequence(channel_url, session)
@@ -114,7 +146,7 @@ def dump_to_file(channel_url, session):
             counter = 0
         # XXX session can be a class with session cookie, uid cookie? start and last sequence
         log.debug(sequence)
-        # TDOD cleanup this shit
+        # TDOD cleanup this stuff
         startseq = int(sequence)
         endseq = int(sequence) + 10
         if curseq < startseq:
@@ -126,7 +158,8 @@ def dump_to_file(channel_url, session):
                 log.error('failed %i', seq)
                 break
             else:
-                filename = save_segment(stream, filename, session)
+                # write segment to queue
+                Stream.queue.push(stream)
                 log.debug('got %i', seq)
                 curseq = seq + 1
     return
