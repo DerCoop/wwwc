@@ -34,13 +34,11 @@ class WilmaaSession(WwwcConfig):
         pass
 
 
-def get_user_data(userdata, main_config):
+def get_user_data(username, passwd, main_config):
     """get userdata from wilmaa server"""
     import urllib
     import urllib2
 
-    username = userdata.get('username')
-    passwd = userdata.get('passwd')
     proxy = main_config.get('proxy')
     uagent = main_config.get('uagent')
 
@@ -112,9 +110,15 @@ def create_cookie(name, value):
     )
 
 
-def create_uid_cookie(userdata, session):
-    user_id = get_user_data(userdata, session)
+def create_uid_cookie(user_id, session):
     if not user_id:
-        misc.die(-1, 'unknown user ID')
+        import getpass
+        print 'No user_id found in config file'
+        username = raw_input('Username: ')
+        passwd = getpass.getpass()
+        user_id = get_user_data(username, passwd, session)
+        print 'user id:', user_id
+        if not user_id:
+            misc.die(-1, 'unknown user ID')
 
     return create_cookie('wilmaUserID', user_id)

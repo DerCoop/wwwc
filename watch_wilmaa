@@ -24,6 +24,16 @@ def cleanup_tmpdir(tmppath):
             shutil.rmtree(os.path.join(root, d))
 
 
+def get_uid(configfile):
+    from ConfigParser import ConfigParser
+    config = ConfigParser()
+    config.read(configfile)
+    try:
+        return config.get('userdata', 'user_id')
+    except:
+        return
+
+
 def main():
     """main"""
     import wwwc.sessionhandler as sessionhandler
@@ -52,9 +62,6 @@ def main():
         msg = 'config file did not exist (' + configfile + ')'
         misc.die(-1, msg)
 
-    # TODO get only the UID, if not stored at the config file,
-    #   get username and passwd from cmdline and store the UID at the config file (if we have one, else exit)
-    userdata = config.get_config_section(configfile, 'userdata')
     session = config.create_stream_session(configfile)
 
     tmppath = session.get('tmppath')
@@ -72,7 +79,8 @@ def main():
     session.set('tmppath', tmppath)
 
     # create userID cookie and add it to the config
-    uid_ck = sessionhandler.create_uid_cookie(userdata, session)
+    uid = get_uid(configfile)
+    uid_ck = sessionhandler.create_uid_cookie(uid, session)
     session.add_cookie(uid_ck)
 
     channel_list = channelhandler.get_channel_list(session)
