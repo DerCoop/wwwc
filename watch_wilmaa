@@ -7,24 +7,11 @@
 __author__ = 'cooper'
 
 import os
-import subprocess
-import sys
 import wwwc.misc as misc
 import logging as log
-from xml.dom import minidom
 import wwwc.config as config
 import wwwc.streamhandler as streamhandler
 import wwwc.channelhandler as channelhandler
-
-
-# deprecated
-def create_user_id_cookie(user_id, tmppath):
-    """create cookie with the userid"""
-    # www.wilmaa.com	FALSE	/	FALSE	0	wilmaUserID	userid
-    cookie = tmppath + 'wilmaa_user_id'
-    with open(cookie, 'w+') as fd:
-        fd.write('www.wilmaa.com\tFALSE\t/\tFALSE\t0\twilmaUserID\t' + user_id + '\n')
-    return cookie
 
 
 def cleanup_tmpdir(tmppath):
@@ -50,8 +37,6 @@ def main():
         del log.root.handlers[:]
 
     formatstring = '[%(levelname)s]: %(message)s'
-    # get loglevel, commandline || default value
-
     if opts.loglevel:
         loglevel = log.getLevelName(opts.loglevel.upper())
     else:
@@ -67,6 +52,8 @@ def main():
         msg = 'config file did not exist (' + configfile + ')'
         misc.die(-1, msg)
 
+    # TODO get only the UID, if not stored at the config file,
+    #   get username and passwd from cmdline and store the UID at the config file (if we have one, else exit)
     userdata = config.get_config_section(configfile, 'userdata')
     session = config.create_stream_session(configfile)
 

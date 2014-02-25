@@ -4,9 +4,7 @@
 
     """
 
-import os
 import sys
-import subprocess
 
 
 class ChannelList:
@@ -54,8 +52,6 @@ def get_channel_list(session):
     """
     import json
     import urllib2
-    import cookielib
-    import sessionhandler
 
     # url = 'http://www.wilmaa.com/channels/ch/webfree_en.xml'
     url = 'http://www.wilmaa.com/channels/ch/webfree_en.json'

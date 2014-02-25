@@ -6,7 +6,6 @@
 
 import logging as log
 import threading
-import subprocess
 import os
 import urllib2
 import time
@@ -67,37 +66,6 @@ def get_current_sequence(channel_url, session):
         return 0
 
 
-def get_next_file(filename):
-    from math import *
-    filename += 1
-    filename %= 2
-    return int(filename)
-
-
-def save_segment(stream, filename, main_config):
-    """save a segment of a stream"""
-    buffersize = main_config.get('buffer_size')
-    tmppath = main_config.get('tmppath')
-
-    tfile = os.path.join(tmppath, str(filename))
-    try:
-        fsize = os.stat(tfile).st_size
-    except:
-        fsize = 0
-    if int(fsize) > int(buffersize):
-        log.warn('filesize exceed, switch to next file')
-        filename = get_next_file(filename)
-        tfile = os.path.join(tmppath, str(filename))
-        try:
-            os.remove(tfile)
-        except:
-            pass
-    with open(tfile, 'a') as fd:
-        fd.write(stream)
-    log.debug('wrote to %s', tfile)
-    return filename
-
-
 def get_stream(channel_url, seq, session):
     """get a segment of the stream"""
     proxy = session.get('proxy')
@@ -144,9 +112,8 @@ def dump_to_file(channel_url, session):
             break
         else:
             counter = 0
-        # XXX session can be a class with session cookie, uid cookie? start and last sequence
         log.debug(sequence)
-        # TDOD cleanup this stuff
+
         startseq = int(sequence)
         endseq = int(sequence) + 10
         if curseq < startseq:
@@ -155,6 +122,7 @@ def dump_to_file(channel_url, session):
         for seq in range(curseq, endseq):
             stream = get_stream(channel_url, seq, session)
             if not stream:
+                # XXX if we have <8 segments at the queue, we can try to get it again
                 log.error('failed %i', seq)
                 break
             else:
