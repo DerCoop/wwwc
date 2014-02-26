@@ -67,28 +67,6 @@ def get_current_sequence(session):
         return 0
 
 
-def get_stream(seq, session):
-    """get a segment of the stream"""
-    url = session.get_url(seq)
-    header = session.get_header()
-
-    req = urllib2.Request(url, None, header)
-    opener = urllib2.build_opener()
-    opener.add_handler(urllib2.HTTPCookieProcessor(session.get_cookie()))
-    try:
-        opener.add_handler(session.get_proxy())
-    except:
-        log.error()
-
-    urllib2.install_opener(opener)
-
-    try:
-        response = urllib2.urlopen(req)
-        return response.read()
-    except:
-        return
-
-
 def dump_to_file(session):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
@@ -118,7 +96,7 @@ def dump_to_file(session):
             curseq = startseq
         log.debug('next: %i', curseq)
         for seq in range(curseq, endseq):
-            stream = get_stream(seq, session)
+            stream = session.get_stream(seq)
             if not stream:
                 # XXX if we have <8 segments at the queue, we can try to get it again
                 log.error('failed %i', seq)

@@ -48,9 +48,26 @@ class WilmaaSession(WwwcConfig):
         _channel = self.config.get('channel')
         return str(_channel) + '/segment' + str(seq) + '_' + str(_res) + '_av-p.ts?sd=6'
 
-    def get_stream(self, url):
-        """get streamsegment"""
-        pass
+    def get_stream(self, seq):
+        """get a segment of the stream"""
+        url = self.get_url(seq)
+        header = self.get_header()
+
+        req = urllib2.Request(url, None, header)
+        opener = urllib2.build_opener()
+        opener.add_handler(urllib2.HTTPCookieProcessor(self.get_cookie()))
+        try:
+            opener.add_handler(self.get_proxy())
+        except:
+            log.error()
+
+        urllib2.install_opener(opener)
+
+        try:
+            response = urllib2.urlopen(req)
+            return response.read()
+        except:
+            return
 
 
 def get_user_data(username, passwd, main_config):
