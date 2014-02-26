@@ -36,37 +36,6 @@ class Stream(threading.Thread):
                 fifo.write(segment)
 
 
-def get_current_sequence(session):
-    """get the current sequence from the paylist"""
-    proxy = session.get('proxy')
-    uagent = session.get('uagent')
-    resolution = session.get('resolution')
-    channel_url = session.get('channel')
-    url = str(channel_url) + '/index_' + str(resolution) + '_av-p.m3u8'
-
-    header = {}
-    header['User-Agent'] = uagent
-
-    req = urllib2.Request(url, None, header)
-    opener = urllib2.build_opener()
-    opener.add_handler(urllib2.HTTPCookieProcessor(session.get_cookie()))
-    if proxy:
-        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
-        opener.add_handler(proxy)
-
-    urllib2.install_opener(opener)
-
-    response = urllib2.urlopen(req)
-    stream = response.read()
-
-    try:
-        for line in stream.split('\n'):
-            if line.startswith('#EXT-X-MEDIA-SEQUENCE'):
-                return line.split(':')[1]
-    except:
-        return 0
-
-
 def dump_to_file(session):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
@@ -79,7 +48,7 @@ def dump_to_file(session):
     stream_thread.start()
 
     while True:
-        sequence = get_current_sequence(session)
+        sequence = session.get_current_sequence()
         if not sequence:
             if counter == 3:
                 return -1, 'stream not available'

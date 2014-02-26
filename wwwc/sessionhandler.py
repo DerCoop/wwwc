@@ -43,14 +43,19 @@ class WilmaaSession(WwwcConfig):
     def get_proxy(self):
         return self.proxy
 
-    def get_url(self, seq):
+    def get_segment_url(self, seq):
         _res = self.config.get('resolution')
         _channel = self.config.get('channel')
         return str(_channel) + '/segment' + str(seq) + '_' + str(_res) + '_av-p.ts?sd=6'
 
+    def get_sequence_url(self):
+        _res = self.config.get('resolution')
+        _channel = self.config.get('channel')
+        return str(_channel) + '/index_' + str(_res) + '_av-p.m3u8'
+
     def get_stream(self, seq):
         """get a segment of the stream"""
-        url = self.get_url(seq)
+        url = self.get_segment_url(seq)
         header = self.get_header()
 
         req = urllib2.Request(url, None, header)
@@ -68,6 +73,31 @@ class WilmaaSession(WwwcConfig):
             return response.read()
         except:
             return
+
+    def get_current_sequence(self):
+        """get the current sequence from the paylist"""
+        url = self.get_sequence_url()
+        header = self.get_header()
+
+        req = urllib2.Request(url, None, header)
+        opener = urllib2.build_opener()
+        opener.add_handler(urllib2.HTTPCookieProcessor(self.get_cookie()))
+        try:
+            opener.add_handler(self.get_proxy())
+        except:
+            log.warning('can not add proxy')
+
+        urllib2.install_opener(opener)
+
+        response = urllib2.urlopen(req)
+        stream = response.read()
+
+        try:
+            for line in stream.split('\n'):
+                if line.startswith('#EXT-X-MEDIA-SEQUENCE'):
+                    return line.split(':')[1]
+        except:
+            return 0
 
 
 def get_user_data(username, passwd, main_config):
