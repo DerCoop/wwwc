@@ -91,7 +91,9 @@ def main():
     else:
         channel_url = channelhandler.select_channel(channel_list)
 
-    rc, msg = streamhandler.dump_to_file(channel_url, session)
+    session.set('channel', channel_url)
+
+    rc, msg = streamhandler.dump_to_file(session)
 
     if int(rc) < 0:
         misc.die(rc, msg)

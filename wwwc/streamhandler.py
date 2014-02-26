@@ -36,11 +36,12 @@ class Stream(threading.Thread):
                 fifo.write(segment)
 
 
-def get_current_sequence(channel_url, session):
+def get_current_sequence(session):
     """get the current sequence from the paylist"""
     proxy = session.get('proxy')
     uagent = session.get('uagent')
     resolution = session.get('resolution')
+    channel_url = session.get('channel')
     url = str(channel_url) + '/index_' + str(resolution) + '_av-p.m3u8'
 
     header = {}
@@ -66,22 +67,18 @@ def get_current_sequence(channel_url, session):
         return 0
 
 
-def get_stream(channel_url, seq, session):
+def get_stream(seq, session):
     """get a segment of the stream"""
-    proxy = session.get('proxy')
-    uagent = session.get('uagent')
-    resolution = session.get('resolution')
-    url = str(channel_url) + '/segment' + str(seq) + '_' + str(resolution) + '_av-p.ts?sd=6'
-
-    header = {}
-    header['User-Agent'] = uagent
+    url = session.get_url(seq)
+    header = session.get_header()
 
     req = urllib2.Request(url, None, header)
     opener = urllib2.build_opener()
     opener.add_handler(urllib2.HTTPCookieProcessor(session.get_cookie()))
-    if proxy:
-        proxy = urllib2.ProxyHandler({'http': proxy, 'https': proxy})
-        opener.add_handler(proxy)
+    try:
+        opener.add_handler(session.get_proxy())
+    except:
+        log.error()
 
     urllib2.install_opener(opener)
 
@@ -92,7 +89,7 @@ def get_stream(channel_url, seq, session):
         return
 
 
-def dump_to_file(channel_url, session):
+def dump_to_file(session):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
     counter = 0
@@ -104,7 +101,7 @@ def dump_to_file(channel_url, session):
     stream_thread.start()
 
     while True:
-        sequence = get_current_sequence(channel_url, session)
+        sequence = get_current_sequence(session)
         if not sequence:
             if counter == 3:
                 return -1, 'stream not available'
@@ -121,7 +118,7 @@ def dump_to_file(channel_url, session):
             curseq = startseq
         log.debug('next: %i', curseq)
         for seq in range(curseq, endseq):
-            stream = get_stream(channel_url, seq, session)
+            stream = get_stream(seq, session)
             if not stream:
                 # XXX if we have <8 segments at the queue, we can try to get it again
                 log.error('failed %i', seq)

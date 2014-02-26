@@ -5,9 +5,11 @@
     """
 
 import cookielib
+import urllib2
 import misc
 from config import WwwcConfig
 from xml.dom import minidom
+import logging as log
 
 
 class WilmaaSession(WwwcConfig):
@@ -15,11 +17,16 @@ class WilmaaSession(WwwcConfig):
 
     def __init__(self, filename, section):
         WwwcConfig.__init__(self, filename, section)
-        self.uagent = self.config.get('uagent')
-        self.proxy = self.config.get('proxy')
-        self.resolution = self.config.get('resolution')
-        self.tmppath = self.config.get('tmppath')
+        self.header = {}
+        self.header['User-Agent'] = self.config.get('uagent')
+        #self.tmppath = self.config.get('tmppath')
         self.cookie = cookielib.CookieJar()
+        try:
+            _proxy = self.config.get('proxy')
+            self.proxy = urllib2.ProxyHandler({'http': _proxy, 'https': _proxy})
+        except:
+            # TODO add handling for separate proxies
+            self.proxy = None
 
     def add_cookie(self, cookie):
         """add a netscape cookie by hand"""
@@ -28,6 +35,18 @@ class WilmaaSession(WwwcConfig):
     def get_cookie(self):
         """get the cookie"""
         return self.cookie
+
+    def get_header(self):
+        """get the header"""
+        return self.header
+
+    def get_proxy(self):
+        return self.proxy
+
+    def get_url(self, seq):
+        _res = self.config.get('resolution')
+        _channel = self.config.get('channel')
+        return str(_channel) + '/segment' + str(seq) + '_' + str(_res) + '_av-p.ts?sd=6'
 
     def get_stream(self, url):
         """get streamsegment"""
