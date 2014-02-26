@@ -59,7 +59,7 @@ class WilmaaSession(WwwcConfig):
         try:
             opener.add_handler(self.get_proxy())
         except:
-            log.error()
+            log.warning('can not add proxy')
 
         urllib2.install_opener(opener)
 
