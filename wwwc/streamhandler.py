@@ -112,13 +112,14 @@ def dump_to_file(channel_url, session):
             break
         else:
             counter = 0
-        log.debug(sequence)
 
+        log.debug('cur: %i', int(sequence))
         startseq = int(sequence)
         endseq = int(sequence) + 10
         if curseq < startseq:
+            log.debug('skip %i to %i', curseq, startseq - 1)
             curseq = startseq
-        log.debug('cur: %i', curseq)
+        log.debug('next: %i', curseq)
         for seq in range(curseq, endseq):
             stream = get_stream(channel_url, seq, session)
             if not stream:
