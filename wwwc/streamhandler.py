@@ -35,6 +35,20 @@ class Stream(threading.Thread):
                 fifo.write(segment)
 
 
+class Segments(threading.Thread):
+    def __init__(self, session, segment):
+        threading.Thread.__init__(self)
+        self.segment = segment
+        # the cookie is changing if we get a new segment list
+        self.session = session
+
+    def run(self):
+        self.stream = self.session.get_stream(self.segment)
+
+    def get_stream_segment(self):
+        return self.stream
+
+
 def dump_to_file(session):
     """get current pieces of the stream and save it into a file"""
     curseq = 0
@@ -62,13 +76,23 @@ def dump_to_file(session):
         if curseq < startseq:
             log.debug('skip %i to %i', curseq, startseq - 1)
             curseq = startseq
-        log.debug('next: %i', curseq)
+
+        log.debug('get %i to %i', curseq, endseq)
+        streams = {}
         for seq in range(curseq, endseq):
-            stream = session.get_stream(seq)
+            seg = Segments(session, seq)
+            seg.setDaemon(True)
+            seg.start()
+            streams[seq] = seg
+
+            #stream = session.get_stream(seq)
+        for seq in range(curseq, endseq):
+            streams[seq].join()
+            stream = streams[seq].get_stream_segment()
             if not stream:
                 # XXX if we have <8 segments at the queue, we can try to get it again
                 log.error('failed %i', seq)
-                break
+                #break
             else:
                 # write segment to queue
                 Stream.queue.push(stream)
