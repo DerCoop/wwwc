@@ -69,7 +69,7 @@ class WilmaaSession(WwwcConfig):
         urllib2.install_opener(opener)
 
         try:
-            response = urllib2.urlopen(req)
+            response = urllib2.urlopen(req, timeout=10)
             return response.read()
         except:
             return
@@ -89,8 +89,11 @@ class WilmaaSession(WwwcConfig):
 
         urllib2.install_opener(opener)
 
-        response = urllib2.urlopen(req)
-        stream = response.read()
+        try:
+            response = urllib2.urlopen(req, timeout=10)
+            stream = response.read()
+        except:
+            return 0
 
         try:
             for line in stream.split('\n'):
@@ -128,7 +131,7 @@ def get_user_data(username, passwd, main_config):
     urllib2.install_opener(opener)
 
     print 'get user data'
-    response = urllib2.urlopen(req)
+    response = urllib2.urlopen(req,timeout=10)
     stream = response.read()
 
     userdata = minidom.parseString(stream)

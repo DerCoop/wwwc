@@ -7,7 +7,6 @@
 import logging as log
 import threading
 import os
-import urllib2
 import time
 from ringbuffer import RingBuffer
 
@@ -75,4 +74,5 @@ def dump_to_file(session):
                 Stream.queue.push(stream)
                 log.debug('got %i', seq)
                 curseq = seq + 1
-    return
+
+    return 0, 'quit'
