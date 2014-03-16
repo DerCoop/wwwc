@@ -15,13 +15,9 @@ import wwwc.channelhandler as channelhandler
 
 
 def cleanup_tmpdir(tmppath):
-    import shutil
-
-    for root, dirs, files in os.walk(tmppath):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))
+    # TODO add fifoname to configfile
+    fifoname = os.path.join(tmppath, 'streamfifo')
+    os.unlink(fifoname)
 
 
 def get_uid(configfile):
