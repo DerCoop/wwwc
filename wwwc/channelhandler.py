@@ -15,7 +15,7 @@ class ChannelList:
         self.url = url
         self.lang = lang
 
-    def det_id(self):
+    def get_id(self):
         return self.url
 
     def get_url(self):
