@@ -179,15 +179,5 @@ def create_cookie(name, value):
     )
 
 
-def create_uid_cookie(user_id, session):
-    if not user_id:
-        import getpass
-        print 'No user_id found in config file'
-        username = raw_input('Username: ')
-        passwd = getpass.getpass()
-        user_id = get_user_data(username, passwd, session)
-        print 'user id:', user_id
-        if not user_id:
-            misc.die(-1, 'unknown user ID')
-
+def create_uid_cookie(user_id):
     return create_cookie('wilmaUserID', user_id)

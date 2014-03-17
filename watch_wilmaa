@@ -23,14 +23,23 @@ def cleanup_tmpdir(tmppath):
         pass
 
 
-def get_uid(configfile):
+def get_uid(configfile, session):
     from ConfigParser import ConfigParser
     config = ConfigParser()
     config.read(configfile)
     try:
-        return config.get('userdata', 'user_id')
+        user_id = config.get('userdata', 'user_id')
+        # check user ID
     except:
-        return
+        import getpass
+        from wwwc.sessionhandler import get_user_data
+        print 'No user_id found in config file'
+        username = raw_input('Username: ')
+        passwd = getpass.getpass()
+        user_id = get_user_data(username, passwd, session)
+        if not user_id:
+            misc.die(-1, 'unknown user ID')
+    return user_id
 
 
 def main():
@@ -78,8 +87,8 @@ def main():
     session.set('tmppath', tmppath)
 
     # create userID cookie and add it to the config
-    uid = get_uid(configfile)
-    uid_ck = sessionhandler.create_uid_cookie(uid, session)
+    uid = get_uid(configfile, session)
+    uid_ck = sessionhandler.create_uid_cookie(uid)
     session.add_cookie(uid_ck)
 
     channel_list = channelhandler.get_channel_list(session)
