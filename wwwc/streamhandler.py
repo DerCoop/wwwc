@@ -51,8 +51,8 @@ class Segments(threading.Thread):
 
 def dump_to_file(session):
     """get current pieces of the stream and save it into a file"""
+    curseq = 0
     counter = 0
-    last = 0
 
     fifoname = os.path.join(session.get('tmppath'), 'streamfifo')
 
@@ -70,36 +70,33 @@ def dump_to_file(session):
         else:
             counter = 0
 
+        log.debug('cur: %i', int(sequence))
         startseq = int(sequence)
         endseq = int(sequence) + 10
-        if last >= startseq:
-            startseq = last + 1
-        else:
-            log.warn('skip %i to %i', last, startseq)
+        if curseq < startseq:
+            log.debug('skip %i to %i', curseq, startseq - 1)
+            curseq = startseq
 
-        if startseq == endseq:
-            # nothing to get
-            time.sleep(1)
-            continue
-        log.debug('get %i to %i', startseq, endseq - 1)
+        log.debug('get %i to %i', curseq, endseq)
         streams = {}
-        for current in range(startseq, endseq):
-            seg = Segments(session, current)
+        for seq in range(curseq, endseq):
+            seg = Segments(session, seq)
             seg.setDaemon(True)
             seg.start()
-            streams[current] = seg
+            streams[seq] = seg
 
-        # sort segments and add to queue
-        for current in range(startseq, endseq):
-            streams[current].join()
-            stream = streams[current].get_stream_segment()
+            #stream = session.get_stream(seq)
+        for seq in range(curseq, endseq):
+            streams[seq].join()
+            stream = streams[seq].get_stream_segment()
             if not stream:
                 # XXX if we have <8 segments at the queue, we can try to get it again
-                log.error('failed %i', current)
+                log.error('failed %i', seq)
+                #break
             else:
                 # write segment to queue
                 Stream.queue.push(stream)
-                log.debug('got %i', current)
-                last = current
+                log.debug('got %i', seq)
+                curseq = seq + 1
 
     return 0, 'quit'
