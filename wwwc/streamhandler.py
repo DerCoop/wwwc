@@ -22,12 +22,16 @@ class Stream(threading.Thread):
 
     def run(self):
         """write all segments from queue to fifo"""
+        while self.queue.is_empty():
+            time.sleep(1)
         try:
             os.mkfifo(self.fifo)
         except:
             pass
 
         with open(self.fifo, 'a+') as fifo:
+            while self.queue.is_empty():
+                time.sleep(1)
             while True:
                 while self.queue.is_empty():
                     time.sleep(1)
