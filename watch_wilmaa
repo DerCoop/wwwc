@@ -17,7 +17,10 @@ import wwwc.channelhandler as channelhandler
 def cleanup_tmpdir(tmppath):
     # TODO add fifoname to configfile
     fifoname = os.path.join(tmppath, 'streamfifo')
-    os.unlink(fifoname)
+    try:
+        os.unlink(fifoname)
+    except:
+        pass
 
 
 def get_uid(configfile):
