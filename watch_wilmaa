@@ -60,7 +60,7 @@ def main():
 
     session = config.create_stream_session(configfile)
 
-    tmppath = session.get('tmppath')
+    tmppath = session.get('tmp_path')
     if not tmppath:
         import tempfile
         tmppath = tempfile.mkdtemp()

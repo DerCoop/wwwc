@@ -58,7 +58,7 @@ def dump_to_file(session):
     curseq = 0
     counter = 0
 
-    fifoname = os.path.join(session.get('tmppath'), 'streamfifo')
+    fifoname = session.get('stream_file')
 
     stream_thread = Stream(fifoname)
     stream_thread.setDaemon(True)
